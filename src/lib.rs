@@ -1,19 +1,21 @@
 use solana_program::{
-    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, msg, pubkey::Pubkey,
+    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, log::sol_log_compute_units,
+    msg, pubkey::Pubkey,
 };
 
 entrypoint!(process_instruction);
 fn process_instruction(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
+    _program_id: &Pubkey,
+    _accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    msg!(
-        "process_instruction: {}: {} accounts, data={:?}",
-        program_id,
-        accounts.len(),
-        instruction_data
-    );
+    let points: usize = usize::from_be_bytes(instruction_data.try_into().unwrap());
+    let mut sum = 0f32;
+    for point in 0..points {
+        sum += ((point.leading_ones() + point.leading_zeros()) as f32).log2();
+    }
+    msg!("{}", sum);
+    sol_log_compute_units();
     Ok(())
 }
 
@@ -43,7 +45,7 @@ mod test {
             &[Instruction {
                 program_id,
                 accounts: vec![AccountMeta::new(payer.pubkey(), false)],
-                data: vec![1, 2, 3],
+                data: 75usize.to_be_bytes().to_vec(),
             }],
             Some(&payer.pubkey()),
         );
